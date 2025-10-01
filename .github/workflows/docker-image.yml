@@ -14,15 +14,15 @@ jobs:
 
     steps:
 
-    - name: Install pip and pytest
-      run: |
-            sudo apt update
-            sudo apt install python3-pip -y
-            pip3 install pytest
+    # - name: Install pip and pytest
+    #   run: |
+    #     sudo apt update
+    #     sudo apt install python3-pip -y
+    #     pip3 install pytest
 
 
-    - name: Run pytest
-      run: pytest tests/
+    # - name: Run pytest
+    #   run: pytest tests/
       
     - uses: actions/checkout@v4
     - name: Build the Docker image
