@@ -1,0 +1,20 @@
+from flask import Flask
+import os
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    hostname = os.environ.get("HOSTNAME", "localhost")  # default to "localhost"
+    return f"<h1>Welcome to Ruturaj's Flask App! {hostname}</h1><p>Visit /name or /phone to see details.</p>"
+
+@app.route("/name")
+def lwname():
+    return "I am Ruturaj Gidde"
+
+@app.route("/phone")
+def lwphone():
+    return "9309982768"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
