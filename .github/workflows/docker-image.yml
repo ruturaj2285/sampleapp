@@ -15,4 +15,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
+      working-directory: sampleapp
       run: sudo docker build -t sampleapp:latest .
