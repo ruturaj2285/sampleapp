@@ -13,6 +13,13 @@ jobs:
     runs-on: self-hosted
 
     steps:
+
+    - name: Install test dependencies
+      run: pip install pytest
+
+    - name: Run pytest
+      run: pytest tests/
+      
     - uses: actions/checkout@v4
     - name: Build the Docker image
       run: sudo docker build -t sampleapp:latest .
