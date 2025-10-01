@@ -14,8 +14,12 @@ jobs:
 
     steps:
 
-    - name: Install test dependencies
-      run: pip install pytest
+    - name: Install pip and pytest
+      run: |
+            sudo apt update
+            sudo apt install python3-pip -y
+            pip3 install pytest
+
 
     - name: Run pytest
       run: pytest tests/
