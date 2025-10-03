@@ -8,7 +8,7 @@
 # EXPOSE 5000
 # CMD ["python3", "app.py"]
 
-FROM registry.access.redhat.com/ubi8/ubi:latest
+FROM registry.access.redhat.com/ubi8/ubi:8.13
 
 # Update OS packages and install Python
 RUN yum update -y && \
