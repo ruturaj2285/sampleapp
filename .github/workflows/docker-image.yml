@@ -15,7 +15,7 @@ jobs:
 
     - name: Build the Docker image
       run: |
-        sudo docker build -t sampleapp:latest .
+        docker build -t sampleapp:latest .
 
     - name: Save image as tarball
       run: |
