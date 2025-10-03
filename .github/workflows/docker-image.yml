@@ -76,13 +76,13 @@ jobs:
           aws-region: us-east-1  # Change to your region
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your_account_id>.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
       - name: Tag Docker image for ECR
         run: |
-          docker tag sampleapp:latest <your_account_id>.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+          docker tag sampleapp:latest ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
       - name: Push Docker image to ECR
         run: |
-          docker push <your_account_id>.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+          docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
 
 
   run_container:
