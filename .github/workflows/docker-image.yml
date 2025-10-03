@@ -33,7 +33,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build the Docker image
-        run: docker build -t sampleapp:latest .
+        run: |
+           docker rmi sampleapp:latest 
+           docker build -t sampleapp:latest .
 
   save_tarball:
     runs-on: self-hosted
