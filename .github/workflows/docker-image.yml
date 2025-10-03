@@ -23,10 +23,7 @@ jobs:
 
     - name: Run Trivy vulnerability scanner
       run: |
-        trivy image --input sampleapp.tar \
-          --severity HIGH,CRITICAL \
-          --ignore-unfixed \
-          --format table
+        trivy image --input sampleapp.tar
 
     - name: Run the Docker container
       run: |
