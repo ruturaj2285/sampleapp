@@ -6,7 +6,7 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     hostname = os.environ.get("HOSTNAME", "localhost")  # default to "localhost"
-    return f"<h1>Welcome to Ruturaj's Flask App! {hostname}</h1><p>Visit /name or /phone to see details.</p>"
+    return f"<h1>Welcome to Ruturaj  Flask App! {hostname}</h1><p>Visit /name or /phone to see details.</p>"
 
 @app.route("/name")
 def lwname():
