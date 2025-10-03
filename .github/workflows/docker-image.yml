@@ -76,21 +76,21 @@ jobs:
           aws-region: us-east-1  # Change to your region
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 227295996532.dkr.ecr.eu-north-1.amazonaws.com
       - name: Tag Docker image for ECR
         run: |
-          docker tag sampleapp:latest ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+          docker tag sampleapp:latest 227295996532.dkr.ecr.eu-north-1.amazonaws.com/sampleapp:latest
       - name: Push Docker image to ECR
         run: |
-          docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+          docker push 227295996532.dkr.ecr.eu-north-1.amazonaws.com/sampleapp:latest
 
 
-  run_container:
-    runs-on: self-hosted
-    needs: trivy_scan
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run the Docker container
-        run: |
-          docker rm -f my_sample_app || true
-          docker run -d --name my_sample_app -p 5000:5000 sampleapp:latest
+  # run_container:
+  #   runs-on: self-hosted
+  #   needs: trivy_scan
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run the Docker container
+  #       run: |
+  #         docker rm -f my_sample_app || true
+  #         docker run -d --name my_sample_app -p 5000:5000 sampleapp:latest
