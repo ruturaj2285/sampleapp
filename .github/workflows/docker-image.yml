@@ -31,17 +31,28 @@ jobs:
     runs-on: self-hosted
     needs: build_docker
     steps:
-      - uses: actions/checkout@v4
-      - name: Save image as tarball
-        run: docker save -o sampleapp.tar sampleapp:latest
+    - uses: actions/checkout@v4
+    - name: Save Docker image as tarball
+      run: docker save -o sampleapp.tar sampleapp:latest
+    - name: Upload tarball
+      uses: actions/upload-artifact@v3
+      with:
+        name: sampleapp-tar
+        path: sampleapp.tar
 
   trivy_scan:
     runs-on: self-hosted
     needs: save_tarball
     steps:
-      - uses: actions/checkout@v4
-      - name: Run Trivy vulnerability scanner
-        run: trivy image --input sampleapp.tar --exit-code 0 --severity HIGH,CRITICAL
+    - uses: actions/checkout@v4
+    - name: Download Docker tarball
+      uses: actions/download-artifact@v3
+      with:
+        name: sampleapp-tar
+        path: .
+    - name: Run Trivy vulnerability scanner
+      run: trivy image --input sampleapp.tar --exit-code 0 --severity HIGH,CRITICAL
+
 
   run_container:
     runs-on: self-hosted
