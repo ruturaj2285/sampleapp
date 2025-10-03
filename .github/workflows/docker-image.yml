@@ -19,6 +19,14 @@ jobs:
           redact: true
           exit-zero: false
 
+  trivy_fs_scan:
+    runs-on: self-hosted
+    needs: gitleaks
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy FS Scan
+        run: trivy fs --exit-code 0 --severity HIGH,CRITICAL         
+
   build_docker:
     runs-on: self-hosted
     needs: gitleaks
