@@ -7,38 +7,48 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  gitleaks:
     runs-on: self-hosted
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Run Gitleaks Secret Scan
+        uses: zricethezav/gitleaks-action@v2
+        with:
+          config-path: gitleaks.toml
+          verbose: true
+          redact: true
+          exit-zero: false
 
-    # Step 1: Run Gitleaks to scan for secrets
-    - name: Run Gitleaks Secret Scan
-      uses: zricethezav/gitleaks-action@v2
-      with:
-        config-path: gitleaks.toml   # optional if you have a custom config
-        verbose: true
-        redact: true
-        exit-zero: false             # fail workflow if leaks found
+  build_docker:
+    runs-on: self-hosted
+    needs: gitleaks
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Docker image
+        run: docker build -t sampleapp:latest .
 
-    # Step 2: Build the Docker image
-    - name: Build the Docker image
-      run: |
-        docker build -t sampleapp:latest .
+  save_tarball:
+    runs-on: self-hosted
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Save image as tarball
+        run: docker save -o sampleapp.tar sampleapp:latest
 
-    # Step 3: Save image as tarball
-    - name: Save image as tarball
-      run: |
-        docker save -o sampleapp.tar sampleapp:latest
+  trivy_scan:
+    runs-on: self-hosted
+    needs: save_tarball
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy vulnerability scanner
+        run: trivy image --input sampleapp.tar --exit-code 0 --severity HIGH,CRITICAL
 
-    # Step 4: Run Trivy vulnerability scanner
-    - name: Run Trivy vulnerability scanner
-      run: |
-        trivy image --input sampleapp.tar --exit-code 0 --severity HIGH,CRITICAL
-
-    # Step 5: Run the Docker container
-    - name: Run the Docker container
-      run: |
-        docker rm -f my_sample_app || true
-        docker run -d --name my_sample_app -p 5000:5000 sampleapp:latest
+  run_container:
+    runs-on: self-hosted
+    needs: trivy_scan
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the Docker container
+        run: |
+          docker rm -f my_sample_app || true
+          docker run -d --name my_sample_app -p 5000:5000 sampleapp:latest
