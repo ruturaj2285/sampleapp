@@ -23,7 +23,7 @@ jobs:
 
     - name: Run Trivy vulnerability scanner
       run: |
-        sudo trivy image --exit-code 1 --severity HIGH,CRITICAL sampleapp:latest
+        sudo trivy image --exit-code 1 --severity HIGH,CRITICAL sampleapp.tar
 
 
     - name: Run the Docker container
