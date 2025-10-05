@@ -63,35 +63,104 @@ jobs:
     - name: Run Trivy vulnerability scanner
       run: trivy image --input sampleapp.tar --exit-code 0 --severity HIGH,CRITICAL
 
+  # push_to_ecr:
+  #   runs-on: self-hosted
+  #   needs: trivy_scan
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v2
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+  #         aws-region: us-east-1  # Change to your region
+  #     - name: Login to Amazon ECR
+  #       run: |
+  #         aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 227295996532.dkr.ecr.us-east-1.amazonaws.com
+  #     - name: Tag Docker image for ECR
+  #       run: |
+  #         docker tag sampleapp:latest 227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+  #     - name: Push Docker image to ECR
+  #       run: |
+  #         docker push 227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+
+
   push_to_ecr:
     runs-on: self-hosted
     needs: trivy_scan
+    outputs:
+      image_tag: ${{ steps.image_tag.outputs.image_tag }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: us-east-1  # Change to your region
+          aws-region: us-east-1
+
       - name: Login to Amazon ECR
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 227295996532.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Set image tag
+        id: vars
+        run: echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Tag Docker image for ECR
         run: |
-          docker tag sampleapp:latest 227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+          IMAGE_URI=227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp
+          docker tag sampleapp:latest $IMAGE_URI:${TAG}
+          docker tag sampleapp:latest $IMAGE_URI:latest
+
       - name: Push Docker image to ECR
         run: |
-          docker push 227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp:latest
+          IMAGE_URI=227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp
+          docker push $IMAGE_URI:${TAG}
+          docker push $IMAGE_URI:latest
+
+      - name: Output image tag
+        id: image_tag
+        run: echo "image_tag=${TAG}" >> $GITHUB_OUTPUT
+
+          
+
+  update_cd_repo:
+    runs-on: self-hosted
+    needs: push_to_ecr
+    steps:
+      - name: Checkout CD repo
+        uses: actions/checkout@v4
+        with:
+          repository: ruturaj2285/sampleapp-cd
+          ref: main
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update image tag in deployment
+        env:
+          IMAGE_REPO: 227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp
+          NEW_TAG: ${{ needs.push_to_ecr.outputs.image_tag }}
+        run: |
+          echo "Updating deployment image to ${IMAGE_REPO}:${NEW_TAG}"
+          sed -i "s|\(image:\s*\).*|image: ${IMAGE_REPO}:${NEW_TAG}|" k8s/deployment.yaml
+          echo "Updated image line:"
+          grep 'image:' k8s/deployment.yaml
+
+      - name: Commit and push changes
+        env:
+          IMAGE_REPO: 227295996532.dkr.ecr.us-east-1.amazonaws.com/sampleapp
+          NEW_TAG: ${{ needs.push_to_ecr.outputs.image_tag }}
+        run: |
+          git add k8s/deployment.yaml
+          git commit -m "Update image to ${IMAGE_REPO}:${NEW_TAG} [ci skip]" || echo "No changes to commit"
+          git push origin main
 
 
-  # run_container:
-  #   runs-on: self-hosted
-  #   needs: trivy_scan
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Run the Docker container
-  #       run: |
-  #         docker rm -f my_sample_app || true
-  #         docker run -d --name my_sample_app -p 5000:5000 sampleapp:latest
